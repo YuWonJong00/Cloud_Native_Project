@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: white;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            max-width: 90%;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-icon {
+            width: 80px;
+            height: 80px;
+            background: #A6A6A6;
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .user-icon::after {
+            content: '';
+            width: 50px;
+            height:50px;
+            background: #A6A6A6;
+            border-radius: 0 0 25px 25px;
+            position: absolute;
+            bottom: 10px;
+
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 16px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: #009;
+            box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #ccc;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #3498db;
+        }
+
+        .remember-me label {
+            color: #3498db;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+
+
+        .login-button {
+            width: 100%;
+            padding: 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(55, 107, 157, 0.3);
+        }
+
+        .login-button:hover {
+            background: #2ecc71;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(25, 107, 157, 0.4);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+                margin: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="user-icon"></div>
+
+        <form method="POST" action="auth/login">
+
+            <div class="form-group">
+                <i>👤</i>
+                <input type="text" id="name" class="form-input" placeholder="이름" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <i>🔒</i>
+                <input type="text" id="studentId" class="form-input" placeholder="학번" name="studentId" required>
+            </div>
+            
+            <div class="form-options">
+                <div class="remember-me">
+                    <input type="checkbox" id="remember" checked>
+                    <label for="remember">로그인 유지</label>
+                </div>
+
+            </div>
+            
+            <button type="submit" class="login-button">로그인</button>
+        </form>
+    </div>
+        <script>
+            function getQueryParam(param) {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get(param);
+            }
+            window.onload = function() {
+                const errorCode = getQueryParam('error');
+
+                if (errorCode === 'too_short') {
+                    alert("학번이 너무 짧습니다. 아홉자리를 입력해주세요.");
+                    // 오류 메시지를 띄운 후, URL에서 쿼리 파라미터를 제거하여 깔끔하게 만듭니다.
+                    history.replaceState({}, document.title, window.location.pathname);
+                }
+                // 필요한 다른 오류 코드(예: error=1)도 여기에 추가 가능
+                else if (errorCode === '1') {
+                    alert("입력값이 올바르지 않습니다.");
+                    history.replaceState({}, document.title, window.location.pathname);
+                }
+            };
+        </script>
+</body>
+</html>
