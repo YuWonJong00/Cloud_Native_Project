@@ -14,9 +14,9 @@ public class FacilityController {
     @GetMapping("/api/facilities")
     public ResponseEntity<List<FacilityDto>> list() {
         var data = List.of(
-                new FacilityDto(1, "테니스장", "08:00", "22:00"),
-                new FacilityDto(2, "농구장", "09:00", "21:00"),
-                new FacilityDto(3, "축구장", "10:00", "20:00")
+                new FacilityDto(1, "TENNIS", "06:00", "22:00","0"),
+                new FacilityDto(2, "BASKETBALL", "06:00", "22:00","0"),
+                new FacilityDto(3, "SOCCER", "06:00", "22:00","0")
         );
         return ResponseEntity.ok(data);
     }
