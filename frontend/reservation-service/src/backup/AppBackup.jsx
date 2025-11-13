@@ -338,6 +338,8 @@ function SchedulePage() {
   const [facilities, setFacilities] = useState([]);
   const [myReservations, setMyReservations] = useState([]);
   const [showReservations, setShowReservations] = useState(false);
+  const [selectedReservations, setSelectedReservations] = useState(new Set()); // 선택된 예약 ID들
+  const [isDeleting, setIsDeleting] = useState(false); // 삭제 중 상태
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -353,13 +355,16 @@ function SchedulePage() {
             navigate('/login');
             return;
           }
+
           throw new Error('시설 목록 로드 실패');
+
         }
         
         const data = await response.json();
         setFacilities(data);
       } catch (err) {
         console.error(err);
+
         alert('서버와 통신에 실패했습니다. Spring 서버 및 CORS 설정을 확인하세요.');
       }
     };
@@ -367,14 +372,15 @@ function SchedulePage() {
     fetchFacilities();
   }, [navigate]);
 
-  
+
   const handleLogout = async () => {
-      await fetch('/api/auth/logout', { 
-          method: 'GET',
-          credentials: 'include' 
-      });
-      navigate('/login');
+    await fetch('/api/auth/logout', {
+      method: 'GET',
+      credentials: 'include'
+    });
+    navigate('/login');
   };
+
   const handleShowReservedFacilities = async () => {
     try {
       const response = await fetch('/api/myReservation', {
@@ -392,10 +398,82 @@ function SchedulePage() {
 
       const data = await response.json();
       setMyReservations(data);
+      setSelectedReservations(new Set()); // 목록을 새로 불러올 때 선택 초기화
       setShowReservations(true);
     } catch (err) {
       console.error(err);
       alert('예약 내역을 불러오는 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 체크박스 선택/해제 핸들러
+  const handleCheckboxChange = (reservationId) => {
+    const newSelected = new Set(selectedReservations);
+    if (newSelected.has(reservationId)) {
+      newSelected.delete(reservationId);
+    } else {
+      newSelected.add(reservationId);
+    }
+    setSelectedReservations(newSelected);
+  };
+
+  // 전체 선택/해제 핸들러
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      const allIds = new Set(myReservations.map(r => r.reservationId));
+      setSelectedReservations(allIds);
+    } else {
+      setSelectedReservations(new Set());
+    }
+  };
+
+  // 선택된 예약들 삭제
+  const handleDeleteSelected = async () => {
+    if (selectedReservations.size === 0) {
+      alert('삭제할 예약을 선택해주세요.');
+      return;
+    }
+
+    const confirmMessage = `선택한 ${selectedReservations.size}개의 예약을 삭제하시겠습니까?`;
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      // 선택된 모든 예약을 순차적으로 삭제
+      const deletePromises = Array.from(selectedReservations).map(async (reservationId) => {
+        const response = await fetch(`/api/reservations/${reservationId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('로그인이 필요합니다.');
+          } else if (response.status === 404) {
+            throw new Error(`예약 ID ${reservationId}를 찾을 수 없습니다.`);
+          } else {
+            throw new Error(`예약 ID ${reservationId} 삭제 실패`);
+          }
+        }
+        return reservationId;
+      });
+
+      // 모든 삭제 요청이 완료될 때까지 대기
+      await Promise.all(deletePromises);
+
+      alert(`${selectedReservations.size}개의 예약이 삭제되었습니다.`);
+
+      // 목록 새로고침
+      await handleShowReservedFacilities();
+
+    } catch (err) {
+      console.error('삭제 실패:', err);
+      alert(`삭제 중 오류가 발생했습니다: ${err.message}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -410,24 +488,86 @@ function SchedulePage() {
             <div>
               <div style={styles.reservationHeader}>
                 <h2>내 예약 내역</h2>
-                <button onClick={() => setShowReservations(false)} style={styles.backButton}>
+                <button onClick={() => {
+                  setShowReservations(false);
+                  setSelectedReservations(new Set());
+                }} style={styles.backButton}>
                   목록으로 돌아가기
                 </button>
               </div>
+
               {myReservations.length === 0 ? (
                   <p>예약 내역이 없습니다.</p>
               ) : (
-                  <div style={styles.grid}>
-                    {myReservations.map((reservation) => (
-                        <div key={reservation.reservationId} style={styles.card}>
-                          <h3>{reservation.facility}</h3>
-                          <p><strong>예약 상태:</strong> {reservation.status === 'BOOKED' ? '예약됨' : '취소됨'}</p>
-                          <p><strong>시작 시간:</strong> {new Date(reservation.startAt).toLocaleString('ko-KR')}</p>
-                          <p><strong>종료 시간:</strong> {new Date(reservation.endAt).toLocaleString('ko-KR')}</p>
-                          <p><strong>예약 일시:</strong> {new Date(reservation.createdAt).toLocaleString('ko-KR')}</p>
-                        </div>
-                    ))}
-                  </div>
+                  <>
+                    {/* 전체 선택 및 삭제 버튼 */}
+                    <div style={styles.reservationActions}>
+                      <label style={styles.checkboxLabel}>
+                        <input
+                            type="checkbox"
+                            checked={selectedReservations.size === myReservations.length && myReservations.length > 0}
+                            onChange={handleSelectAll}
+                            style={styles.checkbox}
+                        />
+                        전체 선택
+                      </label>
+                      <button
+                          onClick={handleDeleteSelected}
+                          disabled={selectedReservations.size === 0 || isDeleting}
+                          style={{
+                            ...styles.deleteButton,
+                            opacity: selectedReservations.size === 0 || isDeleting ? 0.5 : 1,
+                            cursor: selectedReservations.size === 0 || isDeleting ? 'not-allowed' : 'pointer'
+                          }}
+                      >
+                        {isDeleting ? '삭제 중...' : `선택한 ${selectedReservations.size}개 삭제`}
+                      </button>
+                    </div>
+
+
+
+                    {/* 예약 목록 */}
+                    <div style={styles.grid}>
+                      {myReservations.map((reservation) => (
+                          <div
+                              key={reservation.reservationId}
+                              style={{
+                                ...styles.card,
+                                ...(selectedReservations.has(reservation.reservationId) ? styles.selectedCard : {})
+                              }}
+                          >
+                            {/* 체크박스를 카드 상단 우측에 배치 */}
+                            <label style={styles.cardCheckboxLabel}>
+                              <input
+                                  type="checkbox"
+                                  checked={selectedReservations.has(reservation.reservationId)}
+                                  onChange={() => handleCheckboxChange(reservation.reservationId)}
+                                  style={styles.checkbox}
+                              />
+                            </label>
+
+                            {/* 카드 내용 */}
+                            <div style={{ paddingTop: '5px' }}>
+                              <h3 style={{ marginTop: '0', marginBottom: '10px' }}>{reservation.facility}</h3>
+                              <p style={{ margin: '5px 0', fontSize: '14px' }}>
+                                <strong>예약 상태:</strong> {reservation.status === 'BOOKED' ? '예약됨' : '취소됨'}
+                              </p>
+                              <p style={{ margin: '5px 0', fontSize: '14px' }}>
+                                <strong>시작 시간:</strong><br />
+                                {new Date(reservation.startAt).toLocaleString('ko-KR')}
+                              </p>
+                              <p style={{ margin: '5px 0', fontSize: '14px' }}>
+                                <strong>종료 시간:</strong><br />
+                                {new Date(reservation.endAt).toLocaleString('ko-KR')}
+                              </p>
+                              <p style={{ margin: '5px 0', fontSize: '14px' }}>
+                                <strong>예약 일시:</strong><br />
+                                {new Date(reservation.createdAt).toLocaleString('ko-KR')}
+                              </p>
+                            </div>
+                          </div>
+                      ))}
+                    </div>                </>
               )}
             </div>
         ) : (
@@ -440,7 +580,7 @@ function SchedulePage() {
                           <h3>{f.name}</h3>
                           <Link
                               to={`/schedule/${encodeURIComponent(f.name)}`}
-                              style={{...styles.button, textDecoration: 'none', marginTop: '10px'}}
+                              style={{...styles.button, textDecoration: 'none', marginTop: '30px'}}
                           >
                             예약하기
                           </Link>
@@ -457,8 +597,6 @@ function SchedulePage() {
         )}
       </div>
   );
-
-
 }
 
 
@@ -487,7 +625,7 @@ export default function App() {
 const styles = {
   container: {
     fontFamily: 'Arial, sans-serif',
-    maxWidth: '800px', // 상세 페이지를 위해 너비 확장
+    maxWidth: '800px',
     margin: '40px auto',
     padding: '20px',
     border: '1px solid #ddd',
@@ -515,9 +653,8 @@ const styles = {
     textDecoration: 'none',
     cursor: 'pointer',
     transition: 'background-color 0.3s',
-    width: '100%', 
+    width: '100%',
     boxSizing: 'border-box',
-  
   },
   form: {
     textAlign: 'left',
@@ -558,25 +695,24 @@ const styles = {
     alignItems: 'center'
   },
   logoutButton: {
-      padding: '8px 12px',
-      fontSize: '14px',
-      color: 'white',
-      backgroundColor: '#e74c3c',
-      border: 'none',
-      borderRadius: '5px',
-      cursor: 'pointer',
-  },
-  ShowReservedButton:{
     padding: '8px 12px',
     fontSize: '14px',
     color: 'white',
-    backgroundColor:'#28a745',
+    backgroundColor: '#e74c3c',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+  },
+  ShowReservedButton: {
+    padding: '8px 12px',
+    fontSize: '14px',
+    color: 'white',
+    backgroundColor: '#28a745',
     border: 'none',
     cursor: 'pointer',
     borderRadius: '5px',
     marginTop: '15px',
     marginLeft: '699px',
-
   },
   grid: {
     display: 'grid',
@@ -585,11 +721,13 @@ const styles = {
     marginTop: '20px'
   },
   card: {
+    position: 'relative', // 추가: 체크박스 위치 지정을 위해
     border: '1px solid #eee',
     borderRadius: '8px',
     padding: '16px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
     textAlign: 'center',
+    minHeight: '200px', // 추가: 카드 최소 높이
   },
   reservationHeader: {
     display: 'flex',
@@ -606,7 +744,6 @@ const styles = {
     borderRadius: '5px',
     cursor: 'pointer',
   },
-  // --- [신규] 시간 슬롯 스타일 ---
   slotTime: {
     fontWeight: 700,
     fontSize: '16px',
@@ -627,6 +764,50 @@ const styles = {
     available: { backgroundColor: '#3498db', color: 'white' },
     reserved: { backgroundColor: '#95a5a6', color: 'white', cursor: 'not-allowed' },
     unavailable: { backgroundColor: '#bdc3c7', color: 'white', cursor: 'not-allowed' },
-  }
+  },
+  reservationActions: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '20px',
+    padding: '10px',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '5px',
+  },
+  checkboxLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 'bold',
+  },
+  cardCheckboxLabel: {
+    position: 'absolute',
+    top: '10px',
+    right: '10px',
+    cursor: 'pointer',
+    zIndex: 10, // 추가: 다른 요소 위에 표시
+  },
+  checkbox: {
+    width: '18px',
+    height: '18px',
+    marginRight: '8px',
+    cursor: 'pointer',
+  },
+  deleteButton: {
+    padding: '10px 20px',
+    fontSize: '14px',
+    color: 'white',
+    backgroundColor: '#dc3545',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  },
+  selectedCard: {
+    border: '2px solid #007bff !important', // !important로 기본 border 덮어쓰기
+    backgroundColor: '#f0f8ff',
+  },
 };
+
 
