@@ -1,7 +1,6 @@
-package school.reservation_service.api; // 패키지 경로는 실제에 맞게 수정하세요
+package school.reservation_service.api;
 
 import jakarta.servlet.http.HttpSession;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import school.reservation_service.domain.User;
@@ -9,8 +8,8 @@ import school.reservation_service.repo.UserRepository;
 
 import java.util.Optional;
 
-@RestController // 👈 @Controller 대신 @RestController 사용
-@RequestMapping("/api/auth") // 👈 /api 경로 추가 (Nginx 프록시를 위해)
+@RestController
+@RequestMapping("/api/auth")
 public class AuthController {
     private final UserRepository userRepository;
 
@@ -28,8 +27,9 @@ public class AuthController {
 
        if(userOptional.isPresent()) {
            User user = userOptional.get();
+           Long userId = Long.valueOf(user.getStudentId());
            session.setAttribute("LOGIN_USER_NAME", user.getName());
-           session.setAttribute("LOGIN_USER_ID", user.getId());
+           session.setAttribute("LOGIN_USER_ID", userId);
 
            // 200 OK (본문 없음) 반환
            return ResponseEntity.ok().build();

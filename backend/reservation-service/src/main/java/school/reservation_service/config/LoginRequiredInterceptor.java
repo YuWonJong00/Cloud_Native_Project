@@ -17,7 +17,8 @@ public class LoginRequiredInterceptor implements HandlerInterceptor {
                 uri.startsWith("/css/") ||
                 uri.startsWith("/js/") ||
                 uri.startsWith("/assets/") ||
-                uri.startsWith("/actuator/")) {
+                uri.startsWith("/actuator/")||
+                uri.startsWith(("/"))) {
             return true;
         }
         HttpSession session = req.getSession(false);

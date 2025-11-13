@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RestController;
 import school.reservation_service.api.dto.FacilityDto;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 public class FacilityController {

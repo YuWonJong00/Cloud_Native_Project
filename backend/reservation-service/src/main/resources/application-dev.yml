@@ -1,0 +1,6 @@
+# 💡 'dev' 프로필에서는 Redis 자동 설정을 제외
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration # ⬅️ 스택트레이스에 reactor가 보여서 이것도 추가
