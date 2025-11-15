@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react';
 
-/**
- * ----------------------------------------------------------------
- * React Router DOM 설치가 필요합니다.
- * 터미널에서 `npm install react-router-dom` 명령어를 실행해주세요.
- * ----------------------------------------------------------------
- */
 import {
   BrowserRouter,
   Routes,
@@ -13,16 +7,13 @@ import {
   Link,
   useNavigate,
   useLocation,
-  useParams // 👈 동적 파라미터를 읽기 위해 useParams 추가
+  useParams
 } from 'react-router-dom';
 
-// ----------------------------------------------------------------
 // 1. 페이지 컴포넌트 정의
-// ----------------------------------------------------------------
 
 /**
  * 메인 화면 (경로: /)
- * (변경 없음)
  */
 function MainPage() {
   return (
@@ -44,6 +35,8 @@ function LoginPage() {
   const [name, setName] = useState('');
   const [studentId, setStudentId] = useState('');
   const [error, setError] = useState(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -53,6 +46,34 @@ function LoginPage() {
       setError('로그인 정보가 올바르지 않습니다.');
     }
   }, [location]);
+  //--------------------
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/auth/check', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (res.ok) {
+          alert("이미 로그인 되어있습니다.")
+
+          navigate('/schedule', { replace: true });
+        } else {
+
+          setCheckingSession(false);
+        }
+      } catch (e) {
+        console.error(e);
+
+        setCheckingSession(false);
+      }
+    };
+
+    checkSession();
+  }, [navigate]);
+  //-----------------------
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -72,13 +93,11 @@ function LoginPage() {
       });
 
       if (response.ok) {
+        alert("로그인 되었습니다.")
         navigate('/schedule');
-      } 
-      else if (response.redirected && response.url.includes('error=1')) {
-         setError('학번이 너무 짧거나 유효하지 않습니다.');
       }
       else if (response.status === 401) {
-          setError('로그인 정보가 올바르지 않습니다.');
+          setError('학번이 너무 짧거나 유효하지 않습니다.');
       }
       else {
         setError('로그인에 실패했습니다. 서버 오류.');
@@ -134,9 +153,7 @@ function getTodayString() {
 }
 
 /**
- * ----------------------------------------------------------------
- * [신규] 시설별 상세 예약 페이지 (경로: /schedule/:facilityName)
- * ----------------------------------------------------------------
+ *  시설별 상세 예약 페이지 (경로: /schedule/:facilityName)
  */
 function FacilitySchedulePage() {
   const { facilityName } = useParams(); // URL에서 시설 이름 파라미터 가져오기
@@ -151,8 +168,7 @@ function FacilitySchedulePage() {
   }, [selectedDate]); // selectedDate가 변경될 때마다 이 effect가 다시 실행됩니다.
 
   /**
-   * (schedule.js의 loadRealTimeSlots 로직)
-   * 서버에서 실제 예약 슬롯 데이터를 가져와 시간표와 병합합니다.
+   * 서버에서 실제 예약 슬롯 데이터를 가져와 시간표와 병합.
    */
   const loadRealTimeSlots = async () => {
     setLoading(true);
@@ -330,9 +346,7 @@ function FacilitySchedulePage() {
 
 
 /**
- * ----------------------------------------------------------------
- * [수정] 시설 목록 페이지 (경로: /schedule)
- * ----------------------------------------------------------------
+ 시설 목록 페이지 (경로: /schedule)
  */
 function SchedulePage() {
   const [facilities, setFacilities] = useState([]);
@@ -355,13 +369,16 @@ function SchedulePage() {
             navigate('/login');
             return;
           }
+
           throw new Error('시설 목록 로드 실패');
+
         }
         
         const data = await response.json();
         setFacilities(data);
       } catch (err) {
         console.error(err);
+
         alert('서버와 통신에 실패했습니다. Spring 서버 및 CORS 설정을 확인하세요.');
       }
     };
@@ -569,6 +586,7 @@ function SchedulePage() {
             </div>
         ) : (
             <>
+              {/* */}
               <p>예약할 시설을 선택하세요:</p>
               <div style={styles.grid}>
                 {facilities.length > 0 ? (
@@ -607,7 +625,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<MainPage />} />
         <Route path="/login" element={<LoginPage />} />
-        {/* [수정] 시설 목록 페이지와 상세 페이지 라우트 분리 */}
+
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/schedule/:facilityName" element={<FacilitySchedulePage />} />
       </Routes>
