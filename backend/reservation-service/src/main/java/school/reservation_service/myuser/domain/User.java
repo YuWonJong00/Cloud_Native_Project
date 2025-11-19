@@ -1,4 +1,4 @@
-package school.reservation_service.domain;
+package school.reservation_service.myuser.domain;
 
 import jakarta.persistence.*;
 import lombok.*;

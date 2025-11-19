@@ -1,10 +1,10 @@
-package school.reservation_service.api;
+package school.reservation_service.mytask.api;
 
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import school.reservation_service.service.ReservationCommandService;
+import school.reservation_service.mytask.service.ReservationCommandService;
 
 record ReserveReq(@NotNull Long slotId) {}
 record ReserveRes(Long reservationId) {}

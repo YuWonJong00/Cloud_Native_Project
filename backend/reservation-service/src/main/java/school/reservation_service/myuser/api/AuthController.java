@@ -1,10 +1,12 @@
-package school.reservation_service.api;
+package school.reservation_service.myuser.api;
 
 import jakarta.servlet.http.HttpSession;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import school.reservation_service.domain.User;
-import school.reservation_service.repo.UserRepository;
+import school.reservation_service.mytask.api.dto.UserInfoResponse;
+import school.reservation_service.myuser.domain.User;
+import school.reservation_service.mytask.repo.UserRepository;
 
 import java.util.Optional;
 
@@ -17,12 +19,31 @@ public class AuthController {
         this.userRepository = userRepository;
     }
 
+    @GetMapping("/check")
+    public ResponseEntity<UserInfoResponse> checkSession(HttpSession session) {
+        String name = (String) session.getAttribute("LOGIN_USER_NAME");
+
+        // 1. 세션에 저장된 타입(Long)으로 값을 가져옵니다.
+        Long studentId= (Long) session.getAttribute("LOGIN_USER_ID");
+
+        if (name == null || studentId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // 2. UserInfoResponse가 String을 요구한다면 Long을 String으로 변환합니다.
+        // 이미 로그인 되어있는 상태
+        UserInfoResponse dto = new UserInfoResponse(name, studentId);
+        return ResponseEntity.ok(dto);
+    }
+
+
     @PostMapping("/login")
     public ResponseEntity<Void> login(
                                        @RequestParam String name,
                                        @RequestParam String studentId,
                                        HttpSession session
     ){
+
         Optional<User> userOptional = userRepository.findByStudentIdAndName(studentId, name);
 
        if(userOptional.isPresent()) {

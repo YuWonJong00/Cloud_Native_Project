@@ -1,4 +1,4 @@
-package school.reservation_service.api.dto;
+package school.reservation_service.mytask.api.dto;
 
 public record MyReservationResponse(  Long reservationId,
                                       String status,

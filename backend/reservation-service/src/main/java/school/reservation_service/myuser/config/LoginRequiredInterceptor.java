@@ -1,4 +1,4 @@
-package school.reservation_service.config;
+package school.reservation_service.myuser.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

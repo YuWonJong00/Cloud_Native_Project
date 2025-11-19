@@ -1,4 +1,4 @@
-package school.reservation_service.api;
+package school.reservation_service.myuser.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -6,8 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import school.reservation_service.api.dto.MyReservationResponse;
-import school.reservation_service.repo.ReservationRepository;
+import school.reservation_service.mytask.api.dto.MyReservationResponse;
+import school.reservation_service.mytask.repo.ReservationRepository;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.List;

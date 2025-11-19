@@ -1,10 +1,10 @@
 
-package school.reservation_service.api;
+package school.reservation_service.mytask.api;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import school.reservation_service.api.dto.FacilityDto;
+import school.reservation_service.mytask.api.dto.FacilityDto;
 
 import java.util.List;
 

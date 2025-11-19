@@ -1,7 +1,7 @@
-package school.reservation_service.repo;
+package school.reservation_service.mytask.repo;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import school.reservation_service.domain.User;
+import school.reservation_service.myuser.domain.User;
 
 import java.util.Optional;
 

@@ -1,4 +1,4 @@
-package school.reservation_service.api;
+package school.reservation_service.mytask.api;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

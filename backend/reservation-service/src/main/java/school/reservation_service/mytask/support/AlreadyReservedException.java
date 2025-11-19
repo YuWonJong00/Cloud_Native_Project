@@ -1,4 +1,4 @@
-package school.reservation_service.support;
+package school.reservation_service.mytask.support;
 
 import lombok.extern.slf4j.Slf4j;
 
